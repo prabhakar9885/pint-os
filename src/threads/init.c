@@ -30,6 +30,7 @@
 #include "userprog/tss.h"
 #else
 #include "tests/threads/tests.h"
+#include "tests/threads/MyFile.h"
 #endif
 #ifdef FILESYS
 #include "devices/block.h"
@@ -277,6 +278,17 @@ parse_options (char **argv)
   return argv;
 }
 
+
+/*  Call the run_hello(), from src/threads/MyFile.c */
+static void
+hello_task(void)
+{
+  printf ("Initiating 'hello':\n");
+  run_hello();
+  printf ("Greetings delivered.\n");
+}
+
+
 /* Runs the task specified in ARGV[1]. */
 static void
 run_task (char **argv)
@@ -297,6 +309,13 @@ run_task (char **argv)
 static void
 run_actions (char **argv) 
 {
+
+  /* Check if the command is "hello" */
+  if( strcmp( (const char*) argv[0], (const char*)"hello") == 0 ){
+      hello_task();
+      return;
+  }
+
   /* An action. */
   struct action 
     {
