@@ -888,10 +888,10 @@ sub timeout {
     seek (STDOUT, 0, 2);
     if (!defined ($cause)) {
 	my ($load_avg) = `uptime` =~ /(load average:.*)$/i;
-	print "\nTIMEOUT after ", time () - $start_time,
-	  " seconds of wall-clock time";
-	print  " - $load_avg" if defined $load_avg;
-	print "\n";
+#	print "\nTIMEOUT after ", time () - $start_time,
+#	  " seconds of wall-clock time";
+#	print  " - $load_avg" if defined $load_avg;
+#	print "\n";
     } else {
 	print "Simulation terminated due to $cause.\n";
     }
