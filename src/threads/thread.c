@@ -63,7 +63,7 @@ static void kernel_thread (thread_func *, void *aux);
 
 static void idle (void *aux UNUSED);
 static struct thread *running_thread (void);
-static struct thread *next_thread_to_run (void);
+static struct thread *next_thread_to_run ( struct thread* );
 static void init_thread (struct thread *, const char *name, int priority);
 static bool is_thread (struct thread *) UNUSED;
 static void *alloc_frame (struct thread *, size_t size);
@@ -115,6 +115,7 @@ thread_start (void)
 
   /* Wait for the idle thread to initialize idle_thread. */
   sema_down (&idle_started);
+
 }
 
 /* Called by the timer interrupt handler at each timer tick.
@@ -208,6 +209,9 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
+
+  if( thread_current()->priority < priority )
+      thread_yield();
 
   return tid;
 }
@@ -339,11 +343,57 @@ thread_foreach (thread_action_func *func, void *aux)
     }
 }
 
+struct list_elem*
+get_high_priority_element (struct list *list)
+{
+ 
+  if( list_size( list ) <=0 )
+      return NULL;
+
+  struct list_elem *e;
+  int max = -1;
+  struct list_elem *target = list_begin(list);
+
+  for (e = list_begin (list); e != list_end (list); e = list_next (e))
+  {
+    struct thread *t = list_entry ( e, struct thread, elem );
+    if( t->priority > max )
+    {
+        max = t->priority;
+        target = e;
+    }
+  }
+  list_remove (target);
+  return target;
+}
+
+
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) 
 {
+   /* thread_current ()->priority = new_priority;
+      if ( new_priority < thread_current()->priority )
+                thread_yield();*/
+  if( new_priority < PRI_MIN )
+      return;
+
   thread_current ()->priority = new_priority;
+
+  struct list_elem *e = get_high_priority_element( &ready_list );
+  struct thread *t;
+  if( e != NULL )
+  {
+      t = list_entry( e, struct thread, elem );
+      list_push_back( &ready_list, e);
+  }
+  else
+      t = idle_thread;
+
+  //printf("Cuurent : %s Max : %s\n", thread_current()->name, t->name );
+
+  if( t->tid != thread_current()->tid )//&& t->priority > thread_current()->priority )
+      thread_yield();
 }
 
 /* Returns the current thread's priority. */
@@ -491,12 +541,19 @@ alloc_frame (struct thread *t, size_t size)
    will be in the run queue.)  If the run queue is empty, return
    idle_thread. */
 static struct thread *
-next_thread_to_run (void) 
+next_thread_to_run ( struct thread *cur) 
 {
   if (list_empty (&ready_list))
     return idle_thread;
   else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);
+  {
+    struct thread *t = 
+        list_entry ( get_high_priority_element (&ready_list), 
+                            struct thread, 
+                            elem);
+    return t;
+  }
+    //return list_entry (list_pop_front (&ready_list), struct thread, elem);
 }
 
 /* Completes a thread switch by activating the new thread's page
@@ -556,7 +613,7 @@ static void
 schedule (void) 
 {
   struct thread *cur = running_thread ();
-  struct thread *next = next_thread_to_run ();
+  struct thread *next = next_thread_to_run ( cur );
   struct thread *prev = NULL;
 
   ASSERT (intr_get_level () == INTR_OFF);
