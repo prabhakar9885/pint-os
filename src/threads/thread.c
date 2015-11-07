@@ -343,12 +343,56 @@ thread_foreach (thread_action_func *func, void *aux)
     }
 }
 
+struct list_elem*
+get_high_priority_element (struct list *list)
+{
+ 
+  if( list_size( list ) <=0 )
+      return NULL;
+
+  struct list_elem *e;
+  int max = -1;
+  struct list_elem *target = list_begin(list);
+
+  for (e = list_begin (list); e != list_end (list); e = list_next (e))
+  {
+    struct thread *t = list_entry ( e, struct thread, elem );
+    if( t->priority > max )
+    {
+        max = t->priority;
+        target = e;
+    }
+  }
+  list_remove (target);
+  return target;
+}
+
+
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) 
 {
+   /* thread_current ()->priority = new_priority;
+      if ( new_priority < thread_current()->priority )
+                thread_yield();*/
+  if( new_priority < PRI_MIN )
+      return;
+
   thread_current ()->priority = new_priority;
-  if ( new_priority < thread_current()->priority )
+
+  struct list_elem *e = get_high_priority_element( &ready_list );
+  struct thread *t;
+  if( e != NULL )
+  {
+      t = list_entry( e, struct thread, elem );
+      list_push_back( &ready_list, e);
+  }
+  else
+      t = idle_thread;
+
+  //printf("Cuurent : %s Max : %s\n", thread_current()->name, t->name );
+
+  if( t->tid != thread_current()->tid )//&& t->priority > thread_current()->priority )
       thread_yield();
 }
 
@@ -489,26 +533,6 @@ alloc_frame (struct thread *t, size_t size)
 
   t->stack -= size;
   return t->stack;
-}
-
-struct list_elem*
-get_high_priority_element (struct list *list)
-{
-  struct list_elem *e;
-  int max = -1;
-  struct list_elem *target= list_begin (list);
-
-  for (e = list_begin (list); e != list_end (list); e = list_next (e))
-  {
-    struct thread *t = list_entry ( e, struct thread, elem );
-    if( t->priority > max )
-    {
-        max = t->priority;
-        target = e;
-    }
-  }
-  list_remove (target);
-  return target;
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
