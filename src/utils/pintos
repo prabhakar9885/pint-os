@@ -256,7 +256,7 @@ sub set_disk {
 sub find_disks {
     # Find kernel, if we don't already have one.
     if (!exists $parts{KERNEL}) {
-	my $name = find_file ('/home/prabhakar/IIIT-H_current/OS/pintos/src/userprog/build/kernel.bin');
+	my $name = find_file ('/home/prabhakar/IIIT-H_current/OS/pintos/src/threads/build/kernel.bin');
 	die "Cannot find kernel\n" if !defined $name;
 	do_set_part ('KERNEL', 'file', $name);
     }
@@ -888,10 +888,10 @@ sub timeout {
     seek (STDOUT, 0, 2);
     if (!defined ($cause)) {
 	my ($load_avg) = `uptime` =~ /(load average:.*)$/i;
-	print "\nTIMEOUT after ", time () - $start_time,
-	  " seconds of wall-clock time";
-	print  " - $load_avg" if defined $load_avg;
-	print "\n";
+#	print "\nTIMEOUT after ", time () - $start_time,
+#	  " seconds of wall-clock time";
+#	print  " - $load_avg" if defined $load_avg;
+#	print "\n";
     } else {
 	print "Simulation terminated due to $cause.\n";
     }
