@@ -1,0 +1,34 @@
+cd /pintos/src/utils
+vim pintos-gdb
+----------GDBMACROS=$HOME/os-pintos/pintos/src/misc/gdb-macros
+
+vim Makefile
+“LDFLAGS = -lm” by “LDLIBS = -lm”
+
+cd utils
+make
+
+
+cd src/threads
+vim Make.vars
+------------Last-line: SIMULATOR = –qemu
+make
+
+
+
+cd src/utils
+vim pintos
+----------Change line no. 103 to “$sim = “qemu” if !defined $sim;” 
+		to enforce qemu as simulator
+----------b. On line no. 259, replace “kernel.bin” to path pointing to kernel.bin file at “$HOME/os-pintos/pintos/src/threads/build/kernel.bin”.
+----------c. Change line no. 623 to” my (@cmd) = (‘qemu-system-x86_64’);”
+
+
+
+
+vim Pintos.pm
+-----------Replace “loader.bin” at  line no.362 to the path “$HOME/os-pintos/pintos/src/threads/build/loader.bin”.
+
+
+
+pintos run alarm-multiple
